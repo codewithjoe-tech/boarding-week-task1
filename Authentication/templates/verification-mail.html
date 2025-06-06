@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Email Verification</title>
+    <style>
+      body {
+        background-color: #f4f4f4;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        padding: 0;
+        margin: 0;
+      }
+      .container {
+        background-color: #ffffff;
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .footer {
+        margin-top: 40px;
+        font-size: 12px;
+        color: #666;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Hello {{ user.full_name }},</h2>
+      <p>
+        Thank you for signing up! Please click the button below to verify your email address.
+      </p>
+      <a href="{{ verification_link }}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; border: none; -webkit-appearance: none; -moz-appearance: none; appearance: none;">Verify Email</a>
+      <p>If you didn’t create an account, you can safely ignore this email.</p>
+      <div class="footer">
+        © {{ year }} CWJ Calendar. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
