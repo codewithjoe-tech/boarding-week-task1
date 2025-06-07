@@ -59,6 +59,7 @@ jobs:
             # Docker login
           echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker rm -f bw1_task || true
+          docker rm -f bw1_task_celery || true
       
           docker rm -f redis || true
 
