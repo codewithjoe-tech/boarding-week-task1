@@ -10,5 +10,6 @@ urlpatterns = [
     path('verify-otp' , VerifyOTP.as_view()),
     path('logout' , Logout.as_view()),
     path('resend-otp' , ResentOTP.as_view()),
+    path('me' ,GetUser.as_view())
 ]
 

@@ -7,6 +7,6 @@ def create_signed_url(email : str):
     value = signing.dumps(email , salt='email-verification')
     
     url = settings.FRONTEND_URL
-    return f"{url}/verify/{value}"
+    return f"{url}/auth/verify/{value}"
 
 

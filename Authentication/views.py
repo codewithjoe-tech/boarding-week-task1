@@ -24,7 +24,7 @@ class RegisterUser(APIView):
         serializer=UserSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data ,status=200)
+            return Response(serializer.data ,status=201)
         return Response(serializer.errors , status=400)
     
 
@@ -42,7 +42,7 @@ class VerifyEmail(APIView):
             return Response({'message' : 'Verification successfull'} , status=200 )
         except (BadSignature , SignatureExpired) as e:
             print(e)
-            return Response({'message' : "Link expired."} , status=400)
+            return Response({'message' : "Invalid url"} , status=400)
         except Exception as e:
             return Response({'message' : str(e)} , status=500)
         
@@ -79,14 +79,17 @@ class Login(APIView):
 
         response = Response(serializer.data , status=200)
 
-        response.set_cookie(key='refresh_token' , value=str(refresh) , httponly=True)
-        response.set_cookie(key='access_token' , value=str(refresh.access_token) , httponly=True)
+        response.set_cookie(key='refresh_token' , value=str(refresh) , httponly=True , samesite=None, secure=True )
+        response.set_cookie(key='loggedin' , value=True , httponly=False , samesite=None, secure=True )
+        response.set_cookie(key='access_token' , value=str(refresh.access_token) , httponly=True , samesite=None, secure=True )
 
         return response
     
 
 
 class RefreshView(APIView):
+    permission_classes = []
+    authentication_classes = []
     def post(self ,request):
         
         refresh_token = request.COOKIES.get('refresh_token')
@@ -95,8 +98,9 @@ class RefreshView(APIView):
         try:
             refresh = RefreshToken(refresh_token)
             access_token = str(refresh.access_token)
-            response = Response({'access_token' : access_token} , status=200)
-            response.set_cookie(key='access_token' , value=access_token , httponly=True)
+            response = Response(status=200)
+            response.set_cookie(key='access_token' , value=access_token , httponly=True , samesite=None, secure=True)
+            response.set_cookie(key='loggedin' , value=True , httponly=False , samesite=None, secure=True)
             return response
         except Exception as e:
 
@@ -228,15 +232,24 @@ class VerifyOTP(APIView):
         cache.delete(email_attempt)
         
         response =  Response({'message' : "Login successful"} , status=200)
-        response.set_cookie(key='refresh_token' , value=str(refresh) , httponly=True)
-        response.set_cookie(key='access_token' , value=str(refresh.access_token) , httponly=True)
+        response.set_cookie(key='refresh_token' , value=str(refresh) , httponly=True , samesite=None, secure=True)
+
+        response.set_cookie(key='loggedin' , value=True , httponly=False , samesite=None, secure=True)
+        response.set_cookie(key='access_token' , value=str(refresh.access_token) , httponly=True , samesite=None, secure=True)
         return response
 
+
+class GetUser(APIView):
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
 
 
 class Logout(APIView):
     def post(self , request):
         response =  Response({'message' : "Logout successful"} , status=200)
         response.delete_cookie('access_token')
+        response.delete_cookie('loggedin')
         response.delete_cookie('refresh_token')
         return response
