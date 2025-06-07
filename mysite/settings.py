@@ -27,9 +27,9 @@ SECRET_KEY = 'django-insecure-9yyxq0_sq3)zlqc9cm4xef#+h4q5%y3b8w7aztpxnz23_x!8yw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["bw-one.codewithjoe.in"]
 
-FRONTEND_URL = 'http://localhost:5173'
+FRONTEND_URL = 'https://bw-frontone.codewithjoe.in'
 
 # Application definition
 
@@ -96,10 +96,14 @@ MIDDLEWARE = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
+    "https://bw-frontone.codewithjoe.in",
+    "http://bw-frontone.codewithjoe.in",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "https://bw-frontone.codewithjoe.in",
+    "http://bw-frontone.codewithjoe.in",
 ]
 ROOT_URLCONF = 'mysite.urls'
 
