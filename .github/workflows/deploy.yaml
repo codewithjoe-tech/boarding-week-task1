@@ -64,7 +64,7 @@ jobs:
 
           docker system prune -a -f
 
-          docker network create bw1-network
+          docker network create bw1-network || true
 
           docker pull ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest
 
