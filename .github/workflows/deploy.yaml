@@ -1,0 +1,86 @@
+name : Deploying BW1 task to ec2
+
+
+
+on:
+  push:
+   branches:
+     - main
+
+jobs:
+  deploy:
+    environment: bs1
+    runs-on: ubuntu-latest
+
+    steps: 
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+
+
+      - name: Create .env File from Secrets
+        run: |
+          echo "EMAIL_HOST_USER = ${{ secrets.EMAIL_HOST_USER }}" > .env
+          echo "EMAIL_HOST_PASSWORD = ${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and Push Docker Images
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest --build-arg SERVICE=web .
+          docker push ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest
+      - name: Deploy to Ec2Instance
+        env:
+          VM_KEY: ${{ secrets.VM_KEY }}
+          VM_IP: ${{ secrets.VM_IP }}
+          VM_USER: ${{ secrets.VM_USER }}
+        run: |
+          # Create SSH key file
+          echo "$VM_KEY" > ec2.pem
+          chmod 600 ec2.pem
+
+          # Transfer .env file to Ec2Instance
+          scp -o StrictHostKeyChecking=no -i ec2.pem .env "$VM_USER@$VM_IP:/home/$VM_USER/.env"
+
+          # Connect to Ec2Instance and deploy
+          ssh -o StrictHostKeyChecking=no -i ec2.pem "$VM_USER@$VM_IP" << EOF
+            set -e
+            echo "Starting deployment on Ec2Instance..."
+
+            # Docker login
+          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker rm -f bw1_task || true
+      
+          docker rm -f redis || true
+
+          docker system prune -a -f
+
+          docker pull ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest
+
+          echo "Starting Redis container..."
+          docker run -d --name redis --network bw1-network -p 6379:6379 redis:alpine
+          echo "Starting Django container..."
+          docker run -d --name bw1_task \
+              --network bw1-network \
+              -p 8000:8000 \
+              --env-file /home/$VM_USER/.env \
+              ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest
+          docker run -d --name bw1_task_celery \
+              --network bw1-network \
+              --env-file /home/$VM_USER/.env \
+              ${{ secrets.DOCKER_USERNAME }}/bw1_task:latest \
+              celery -A mysite worker --loglevel=info
+
+          echo "Deployment complete!"
+          EOF
+
+
